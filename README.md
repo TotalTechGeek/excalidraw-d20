@@ -78,6 +78,9 @@ The Excalidraw editor (npm package) supports:
 
 It's not an exceptionally sophisticated mod, but it did need some tinkering to make the locking per-user specific
 
+![A screenshot of the Excalidraw VTT Mod, showing a selected player in some sort of witch hut with a few rat monsters](https://github.com/TotalTechGeek/excalidraw-d20/assets/2261916/f2448bf2-251a-4304-8a98-72690466351e)
+
+
 ## Instructions
 
 GM / DM creates a session and runs `/claim`, this tells the board who the owner is.
@@ -101,9 +104,18 @@ When you use `/roll <notation>`, you are able to refer to stats from the element
 
 If I wrote `/roll d20+STR`, as shown in the image, it will pull STR from the selected element, and roll `d20+4`
 
+![An example showing a roll pulling a stat from the element selected](https://github.com/TotalTechGeek/excalidraw-d20/assets/2261916/08559023-f748-4c54-ba7e-327b2faf1172)
+
+
 If you use `/set name <some-name>`, it will make it easier to refer to the element from the stats, and will show up in the dice roll if you used attributes.
 
+![The name of the element showing up next the roll](https://github.com/TotalTechGeek/excalidraw-d20/assets/2261916/bc6bbcf2-8294-400b-9346-4bed64601f61)
+
+
 If you reference stats from your rolls, and have multiple elements selected, it will roll the dice for each selected element, making it simpler to run encounters.
+
+![An image showing multiple rat monsters selected, and an attack roll being performed for each with just one command](https://github.com/TotalTechGeek/excalidraw-d20/assets/2261916/f93d279c-25a0-40e9-b2ba-f9976d07709e)
+
 
 ## Excalidraw D20
 
