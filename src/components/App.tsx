@@ -1092,7 +1092,7 @@ class App extends React.Component<AppProps, AppState> {
             cursor: CURSOR_TYPE.MOVE,
             pointerEvents: this.state.viewModeEnabled
               ? POINTER_EVENTS.disabled
-              : POINTER_EVENTS.inheritFromUI,
+              : POINTER_EVENTS.enabled,
           }}
           onPointerDown={(event) => this.handleCanvasPointerDown(event)}
           onWheel={(event) => this.handleWheel(event)}
@@ -1342,7 +1342,8 @@ class App extends React.Component<AppProps, AppState> {
   private openEyeDropper = ({ type }: { type: "stroke" | "background" }) => {
     jotaiStore.set(activeEyeDropperAtom, {
       swapPreviewOnAlt: true,
-      previewType: type === "stroke" ? "strokeColor" : "backgroundColor",
+      colorPickerType:
+        type === "stroke" ? "elementStroke" : "elementBackground",
       onSelect: (color, event) => {
         const shouldUpdateStrokeColor =
           (type === "background" && event.altKey) ||
@@ -1353,12 +1354,14 @@ class App extends React.Component<AppProps, AppState> {
           this.state.activeTool.type !== "selection"
         ) {
           if (shouldUpdateStrokeColor) {
-            this.setState({
-              currentItemStrokeColor: color,
+            this.syncActionResult({
+              appState: { ...this.state, currentItemStrokeColor: color },
+              commitToHistory: true,
             });
           } else {
-            this.setState({
-              currentItemBackgroundColor: color,
+            this.syncActionResult({
+              appState: { ...this.state, currentItemBackgroundColor: color },
+              commitToHistory: true,
             });
           }
         } else {
