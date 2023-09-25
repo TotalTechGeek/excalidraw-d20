@@ -6,15 +6,14 @@
 </a>
 
 <h4 align="center">
-  <a href="https://excalidraw.com">Excalidraw Editor</a> |
-  <a href="https://blog.excalidraw.com">Blog</a> |
-  <a href="https://docs.excalidraw.com">Documentation</a> |
+  <a href="https://excalidraw.com">Excalidraw</a> |
+  <a href="https://excalidraw-d20.netlify.app">Excalidraw D20</a> |
   <a href="https://plus.excalidraw.com">Excalidraw+</a>
 </h4>
 
 <div align="center">
   <h2>
-    An open source virtual hand-drawn style whiteboard. </br>
+    A modification of the open-source whiteboard to support a Virtual Tabletop.</br>
     Collaborative and end-to-end encrypted. </br>
   <br />
   </h2>
