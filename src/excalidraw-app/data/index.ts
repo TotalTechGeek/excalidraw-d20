@@ -113,6 +113,23 @@ export type SocketUpdateDataSource = {
       username: string;
     };
   };
+  SET_DM: {
+    type: "SET_DM";
+    payload: {
+      socketId: string;
+      username: string;
+    };
+  };
+  CHAT_MESSAGE: {
+    type: "CHAT_MESSAGE";
+    payload: {
+      socketId: string;
+      username: string;
+      message: string;
+      type: "message" | "roll";
+      to?: string;
+    };
+  };
   IDLE_STATUS: {
     type: "IDLE_STATUS";
     payload: {

@@ -45,13 +45,17 @@ export class ActionManager {
   updater: (actionResult: ActionResult | Promise<ActionResult>) => void;
 
   getAppState: () => Readonly<AppState>;
-  getElementsIncludingDeleted: () => readonly ExcalidrawElement[];
+  getElementsIncludingDeleted: (
+    restricted: boolean,
+  ) => readonly ExcalidrawElement[];
   app: AppClassProperties;
 
   constructor(
     updater: UpdaterFn,
     getAppState: () => AppState,
-    getElementsIncludingDeleted: () => readonly ExcalidrawElement[],
+    getElementsIncludingDeleted: (
+      restricted: boolean,
+    ) => readonly ExcalidrawElement[],
     app: AppClassProperties,
   ) {
     this.updater = (actionResult) => {
@@ -89,7 +93,7 @@ export class ActionManager {
           action.keyTest(
             event,
             this.getAppState(),
-            this.getElementsIncludingDeleted(),
+            this.getElementsIncludingDeleted(false),
             this.app,
           ),
       );
@@ -107,7 +111,7 @@ export class ActionManager {
       return false;
     }
 
-    const elements = this.getElementsIncludingDeleted();
+    const elements = this.getElementsIncludingDeleted(true);
     const appState = this.getAppState();
     const value = null;
 
@@ -124,7 +128,7 @@ export class ActionManager {
     source: ActionSource = "api",
     value: any = null,
   ) {
-    const elements = this.getElementsIncludingDeleted();
+    const elements = this.getElementsIncludingDeleted(false);
     const appState = this.getAppState();
 
     trackAction(action, source, appState, elements, this.app, value);
@@ -148,14 +152,14 @@ export class ActionManager {
       const action = this.actions[name];
       const PanelComponent = action.PanelComponent!;
       PanelComponent.displayName = "PanelComponent";
-      const elements = this.getElementsIncludingDeleted();
+      const elements = this.getElementsIncludingDeleted(false);
       const appState = this.getAppState();
       const updateData = (formState?: any) => {
         trackAction(action, "ui", appState, elements, this.app, formState);
 
         this.updater(
           action.perform(
-            this.getElementsIncludingDeleted(),
+            this.getElementsIncludingDeleted(false),
             this.getAppState(),
             formState,
             this.app,
@@ -165,7 +169,7 @@ export class ActionManager {
 
       return (
         <PanelComponent
-          elements={this.getElementsIncludingDeleted()}
+          elements={this.getElementsIncludingDeleted(false)}
           appState={this.getAppState()}
           updateData={updateData}
           appProps={this.app.props}
@@ -179,7 +183,7 @@ export class ActionManager {
   };
 
   isActionEnabled = (action: Action) => {
-    const elements = this.getElementsIncludingDeleted();
+    const elements = this.getElementsIncludingDeleted(false);
     const appState = this.getAppState();
 
     return (

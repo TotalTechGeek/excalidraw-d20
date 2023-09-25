@@ -16,6 +16,24 @@ import { AppState } from "../types";
 import { Assert, SameType } from "../utility-types";
 import { randomInteger } from "../random";
 
+export function locked(this: ExcalidrawElement) {
+  const username = window.collab.state.username;
+
+  if (this.customData?.locked) {
+    return true;
+  }
+
+  if (!this.customData || !this.customData.user) {
+    return false;
+  }
+
+  if (this.customData?.user === username) {
+    return false;
+  }
+
+  return username !== window.collab.state.dm;
+}
+
 type ElementIdKey = InstanceType<typeof LinearElementEditor>["elementId"];
 type ElementKey = ExcalidrawElement | ElementIdKey;
 
@@ -108,12 +126,36 @@ class Scene {
   };
   private versionNonce: number | undefined;
 
-  getElementsIncludingDeleted() {
+  getElementsIncludingDeleted(
+    restricted = false,
+  ): readonly ExcalidrawElement[] {
     return this.elements;
   }
 
   getNonDeletedElements(): readonly NonDeletedExcalidrawElement[] {
-    return this.nonDeletedElements;
+    return this.nonDeletedElements.map((i) => {
+      if (i.type === "arrow" || i.type === "line") {
+        if (!locked.call(i)) {
+          return i;
+        }
+      }
+
+      return {
+        ...i,
+        get locked() {
+          return locked.call(i);
+        },
+        set locked(value) {
+          // override it
+          Object.defineProperty(this, "locked", {
+            value,
+            configurable: true,
+            writable: true,
+            enumerable: true,
+          });
+        },
+      };
+    });
   }
 
   getFramesIncludingDeleted() {
@@ -309,6 +351,17 @@ class Scene {
   }
 
   addNewElement = (element: ExcalidrawElement) => {
+    if (!element.customData) {
+      // @ts-expect-error We are adding customData to the element
+      element.customData = {
+        user: window.collab.state.username,
+      };
+    }
+
+    if (!element.customData.user) {
+      element.customData.user = window.collab.state.username;
+    }
+
     if (element.frameId) {
       this.insertElementAtIndex(element, this.getElementIndex(element.frameId));
     } else {

@@ -11,6 +11,9 @@ export const actionSelectAll = register({
   name: "selectAll",
   trackEvent: { category: "canvas" },
   perform: (elements, appState, value, app) => {
+    if (window.collab.state.username !== window.collab.state.dm) {
+      return false;
+    }
     if (appState.editingLinearElement) {
       return false;
     }

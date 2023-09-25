@@ -354,6 +354,8 @@ import { isSidebarDockedAtom } from "./Sidebar/Sidebar";
 import { StaticCanvas, InteractiveCanvas } from "./canvases";
 import { Renderer } from "../scene/Renderer";
 import { ShapeCache } from "../scene/ShapeCache";
+import { Chat } from "./Chat";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const AppContext = React.createContext<AppClassProperties>(null!);
 const AppPropsContext = React.createContext<AppProps>(null!);
@@ -537,6 +539,9 @@ class App extends React.Component<AppProps, AppState> {
         getFiles: () => this.files,
         refresh: this.refresh,
         setToast: this.setToast,
+        addMessage: this.addMessage,
+        addMessages: this.addMessages,
+        clearMessages: this.clearMessages,
         id: this.id,
         setActiveTool: this.setActiveTool,
         setCursor: this.setCursor,
@@ -565,7 +570,8 @@ class App extends React.Component<AppProps, AppState> {
     this.actionManager = new ActionManager(
       this.syncActionResult,
       () => this.state,
-      () => this.scene.getElementsIncludingDeleted(),
+      (restricted: boolean) =>
+        this.scene.getElementsIncludingDeleted(restricted),
       this,
     );
     this.actionManager.registerAll(actions);
@@ -1146,131 +1152,137 @@ class App extends React.Component<AppProps, AppState> {
         }
       >
         <AppContext.Provider value={this}>
-          <AppPropsContext.Provider value={this.props}>
-            <ExcalidrawContainerContext.Provider
-              value={this.excalidrawContainerValue}
-            >
-              <DeviceContext.Provider value={this.device}>
-                <ExcalidrawSetAppStateContext.Provider value={this.setAppState}>
-                  <ExcalidrawAppStateContext.Provider value={this.state}>
-                    <ExcalidrawElementsContext.Provider
-                      value={this.scene.getNonDeletedElements()}
-                    >
-                      <ExcalidrawActionManagerContext.Provider
-                        value={this.actionManager}
+          <GoogleOAuthProvider clientId="102610699821-nn4c785q5e5tnoun1d9eptr65d8v4o56.apps.googleusercontent.com">
+            <AppPropsContext.Provider value={this.props}>
+              <ExcalidrawContainerContext.Provider
+                value={this.excalidrawContainerValue}
+              >
+                <DeviceContext.Provider value={this.device}>
+                  <ExcalidrawSetAppStateContext.Provider
+                    value={this.setAppState}
+                  >
+                    <ExcalidrawAppStateContext.Provider value={this.state}>
+                      <ExcalidrawElementsContext.Provider
+                        value={this.scene.getNonDeletedElements()}
                       >
-                        <LayerUI
-                          canvas={this.canvas}
-                          interactiveCanvas={this.interactiveCanvas}
-                          appState={this.state}
-                          files={this.files}
-                          setAppState={this.setAppState}
-                          actionManager={this.actionManager}
-                          elements={this.scene.getNonDeletedElements()}
-                          onLockToggle={this.toggleLock}
-                          onPenModeToggle={this.togglePenMode}
-                          onHandToolToggle={this.onHandToolToggle}
-                          langCode={getLanguage().code}
-                          renderTopRightUI={renderTopRightUI}
-                          renderCustomStats={renderCustomStats}
-                          showExitZenModeBtn={
-                            typeof this.props?.zenModeEnabled === "undefined" &&
-                            this.state.zenModeEnabled
-                          }
-                          UIOptions={this.props.UIOptions}
-                          onImageAction={this.onImageAction}
-                          onExportImage={this.onExportImage}
-                          renderWelcomeScreen={
-                            !this.state.isLoading &&
-                            this.state.showWelcomeScreen &&
-                            this.state.activeTool.type === "selection" &&
-                            !this.state.zenModeEnabled &&
-                            !this.scene.getElementsIncludingDeleted().length
-                          }
-                          app={this}
+                        <ExcalidrawActionManagerContext.Provider
+                          value={this.actionManager}
                         >
-                          {this.props.children}
-                        </LayerUI>
-                        <div className="excalidraw-textEditorContainer" />
-                        <div className="excalidraw-contextMenuContainer" />
-                        <div className="excalidraw-eye-dropper-container" />
-                        {selectedElements.length === 1 &&
-                          !this.state.contextMenu &&
-                          this.state.showHyperlinkPopup && (
-                            <Hyperlink
-                              key={selectedElements[0].id}
-                              element={selectedElements[0]}
-                              setAppState={this.setAppState}
-                              onLinkOpen={this.props.onLinkOpen}
-                              setToast={this.setToast}
+                          {/* <ToastContainer /> */}
+                          <LayerUI
+                            canvas={this.canvas}
+                            interactiveCanvas={this.interactiveCanvas}
+                            appState={this.state}
+                            files={this.files}
+                            setAppState={this.setAppState}
+                            actionManager={this.actionManager}
+                            elements={this.scene.getNonDeletedElements()}
+                            onLockToggle={this.toggleLock}
+                            onPenModeToggle={this.togglePenMode}
+                            onHandToolToggle={this.onHandToolToggle}
+                            langCode={getLanguage().code}
+                            renderTopRightUI={renderTopRightUI}
+                            renderCustomStats={renderCustomStats}
+                            showExitZenModeBtn={
+                              typeof this.props?.zenModeEnabled ===
+                                "undefined" && this.state.zenModeEnabled
+                            }
+                            UIOptions={this.props.UIOptions}
+                            onImageAction={this.onImageAction}
+                            onExportImage={this.onExportImage}
+                            renderWelcomeScreen={
+                              !this.state.isLoading &&
+                              this.state.showWelcomeScreen &&
+                              this.state.activeTool.type === "selection" &&
+                              !this.state.zenModeEnabled &&
+                              !this.scene.getElementsIncludingDeleted().length
+                            }
+                            app={this}
+                          >
+                            {this.props.children}
+                          </LayerUI>
+                          <div className="excalidraw-textEditorContainer" />
+                          <div className="excalidraw-contextMenuContainer" />
+                          <div className="excalidraw-eye-dropper-container" />
+                          {selectedElements.length === 1 &&
+                            !this.state.contextMenu &&
+                            this.state.showHyperlinkPopup && (
+                              <Hyperlink
+                                key={selectedElements[0].id}
+                                element={selectedElements[0]}
+                                setAppState={this.setAppState}
+                                onLinkOpen={this.props.onLinkOpen}
+                                setToast={this.setToast}
+                              />
+                            )}
+                          {this.state.toast !== null && (
+                            <Toast
+                              message={this.state.toast.message}
+                              onClose={() => this.setToast(null)}
+                              duration={this.state.toast.duration}
+                              closable={this.state.toast.closable}
                             />
                           )}
-                        {this.state.toast !== null && (
-                          <Toast
-                            message={this.state.toast.message}
-                            onClose={() => this.setToast(null)}
-                            duration={this.state.toast.duration}
-                            closable={this.state.toast.closable}
+                          {this.state.contextMenu && (
+                            <ContextMenu
+                              items={this.state.contextMenu.items}
+                              top={this.state.contextMenu.top}
+                              left={this.state.contextMenu.left}
+                              actionManager={this.actionManager}
+                            />
+                          )}
+                          <Chat messages={this.state.userMessages} />
+                          <StaticCanvas
+                            canvas={this.canvas}
+                            rc={this.rc}
+                            elements={canvasElements}
+                            visibleElements={visibleElements}
+                            versionNonce={versionNonce}
+                            selectionNonce={
+                              this.state.selectionElement?.versionNonce
+                            }
+                            scale={window.devicePixelRatio}
+                            appState={this.state}
+                            renderConfig={{
+                              imageCache: this.imageCache,
+                              isExporting: false,
+                              renderGrid: true,
+                            }}
                           />
-                        )}
-                        {this.state.contextMenu && (
-                          <ContextMenu
-                            items={this.state.contextMenu.items}
-                            top={this.state.contextMenu.top}
-                            left={this.state.contextMenu.left}
-                            actionManager={this.actionManager}
+                          <InteractiveCanvas
+                            containerRef={this.excalidrawContainerRef}
+                            canvas={this.interactiveCanvas}
+                            elements={canvasElements}
+                            visibleElements={visibleElements}
+                            selectedElements={selectedElements}
+                            versionNonce={versionNonce}
+                            selectionNonce={
+                              this.state.selectionElement?.versionNonce
+                            }
+                            scale={window.devicePixelRatio}
+                            appState={this.state}
+                            renderInteractiveSceneCallback={
+                              this.renderInteractiveSceneCallback
+                            }
+                            handleCanvasRef={this.handleInteractiveCanvasRef}
+                            onContextMenu={this.handleCanvasContextMenu}
+                            onPointerMove={this.handleCanvasPointerMove}
+                            onPointerUp={this.handleCanvasPointerUp}
+                            onPointerCancel={this.removePointer}
+                            onTouchMove={this.handleTouchMove}
+                            onPointerDown={this.handleCanvasPointerDown}
+                            onDoubleClick={this.handleCanvasDoubleClick}
                           />
-                        )}
-                        <StaticCanvas
-                          canvas={this.canvas}
-                          rc={this.rc}
-                          elements={canvasElements}
-                          visibleElements={visibleElements}
-                          versionNonce={versionNonce}
-                          selectionNonce={
-                            this.state.selectionElement?.versionNonce
-                          }
-                          scale={window.devicePixelRatio}
-                          appState={this.state}
-                          renderConfig={{
-                            imageCache: this.imageCache,
-                            isExporting: false,
-                            renderGrid: true,
-                          }}
-                        />
-                        <InteractiveCanvas
-                          containerRef={this.excalidrawContainerRef}
-                          canvas={this.interactiveCanvas}
-                          elements={canvasElements}
-                          visibleElements={visibleElements}
-                          selectedElements={selectedElements}
-                          versionNonce={versionNonce}
-                          selectionNonce={
-                            this.state.selectionElement?.versionNonce
-                          }
-                          scale={window.devicePixelRatio}
-                          appState={this.state}
-                          renderInteractiveSceneCallback={
-                            this.renderInteractiveSceneCallback
-                          }
-                          handleCanvasRef={this.handleInteractiveCanvasRef}
-                          onContextMenu={this.handleCanvasContextMenu}
-                          onPointerMove={this.handleCanvasPointerMove}
-                          onPointerUp={this.handleCanvasPointerUp}
-                          onPointerCancel={this.removePointer}
-                          onTouchMove={this.handleTouchMove}
-                          onPointerDown={this.handleCanvasPointerDown}
-                          onDoubleClick={this.handleCanvasDoubleClick}
-                        />
-                        {this.renderFrameNames()}
-                      </ExcalidrawActionManagerContext.Provider>
-                      {this.renderEmbeddables()}
-                    </ExcalidrawElementsContext.Provider>
-                  </ExcalidrawAppStateContext.Provider>
-                </ExcalidrawSetAppStateContext.Provider>
-              </DeviceContext.Provider>
-            </ExcalidrawContainerContext.Provider>
-          </AppPropsContext.Provider>
+                          {this.renderFrameNames()}
+                        </ExcalidrawActionManagerContext.Provider>
+                        {this.renderEmbeddables()}
+                      </ExcalidrawElementsContext.Provider>
+                    </ExcalidrawAppStateContext.Provider>
+                  </ExcalidrawSetAppStateContext.Provider>
+                </DeviceContext.Provider>
+              </ExcalidrawContainerContext.Provider>
+            </AppPropsContext.Provider>
+          </GoogleOAuthProvider>
         </AppContext.Provider>
       </div>
     );
@@ -1561,6 +1573,7 @@ class App extends React.Component<AppProps, AppState> {
           : scene.appState.activeTool,
       isLoading: false,
       toast: this.state.toast,
+      userMessages: [],
     };
     if (initialData?.scrollToContent) {
       scene.appState = {
@@ -2256,6 +2269,17 @@ class App extends React.Component<AppProps, AppState> {
     position: { clientX: number; clientY: number } | "cursor" | "center";
     retainSeed?: boolean;
   }) => {
+    for (const element of opts.elements) {
+      if (!element.customData) {
+        // @ts-expect-error We are adding customData to the element
+        element.customData = {};
+      }
+
+      if (typeof element.customData.user === "undefined") {
+        element.customData.user = window.collab.state.username;
+      }
+    }
+
     const elements = restoreElements(opts.elements, null, undefined);
     const [minX, minY, maxX, maxY] = getCommonBounds(elements);
 
@@ -2673,6 +2697,43 @@ class App extends React.Component<AppProps, AppState> {
     this.setState(state);
   };
 
+  clearMessages = () => {
+    this.setState({ userMessages: [] });
+  };
+
+  addMessage = (message: {
+    name: string;
+    message: string;
+    type?: "message" | "roll";
+    to?: string;
+  }) => {
+    this.setState({
+      userMessages: [
+        ...this.state.userMessages,
+        { ...message, type: message.type || "message" },
+      ],
+    });
+  };
+
+  addMessages = (
+    messages: {
+      name: string;
+      message: string;
+      type?: "message" | "roll";
+      to?: string;
+    }[],
+  ) => {
+    this.setState({
+      userMessages: [
+        ...this.state.userMessages,
+        ...messages.map((message) => ({
+          ...message,
+          type: message.type || "message",
+        })),
+      ],
+    });
+  };
+
   setToast = (
     toast: {
       message: string;
@@ -2788,7 +2849,6 @@ class App extends React.Component<AppProps, AppState> {
   private onKeyDown = withBatchedUpdates(
     (event: React.KeyboardEvent | KeyboardEvent) => {
       // normalize `event.key` when CapsLock is pressed #2372
-
       if (
         "Proxy" in window &&
         ((!event.shiftKey && /^[A-Z]$/.test(event.key)) ||
@@ -3391,7 +3451,13 @@ class App extends React.Component<AppProps, AppState> {
             .getNonDeletedElements()
             .filter(
               (element) =>
-                (includeLockedElements || !element.locked) &&
+                ((includeLockedElements &&
+                  window.collab.state.username === window.collab.state.dm) ||
+                  !element.locked ||
+                  (includeLockedElements &&
+                    element.customData?.user ===
+                      window.collab.state.username) ||
+                  !element.locked) &&
                 (includeBoundTextElement ||
                   !(isTextElement(element) && element.containerId)),
             );
@@ -3630,6 +3696,14 @@ class App extends React.Component<AppProps, AppState> {
     resetCursor(this.interactiveCanvas);
     if (!event[KEYS.CTRL_OR_CMD] && !this.state.viewModeEnabled) {
       const hitElement = this.getElementAtPosition(sceneX, sceneY);
+
+      // if (
+      //   hitElement &&
+      //   hitElement.type === "text" &&
+      //   hitElement.text.startsWith("roll")
+      // ) {
+      //   return;
+      // }
 
       if (isEmbeddableElement(hitElement)) {
         this.setState({
@@ -4992,6 +5066,28 @@ class App extends React.Component<AppProps, AppState> {
         );
 
         const hitElement = pointerDownState.hit.element;
+
+        // if (
+        //   hitElement &&
+        //   hitElement.type === "text" &&
+        //   hitElement.text.startsWith("roll")
+        // ) {
+        //   const roller = new DiceRoll(hitElement.text.substring(5));
+        //   this.setToast({
+        //     message: `${roller.output}`,
+        //     duration: 4000,
+        //   });
+
+        //   this.setState({
+        //     selectedElementIds: makeNextSelectedElementIds({}, this.state),
+        //     selectedGroupIds: {},
+        //     editingGroupId: null,
+        //     activeEmbeddable: null,
+        //   });
+
+        //   return true;
+        // }
+
         const someHitElementIsSelected =
           pointerDownState.hit.allHitElements.some((element) =>
             this.isASelectedElement(element),
@@ -6938,7 +7034,7 @@ class App extends React.Component<AppProps, AppState> {
   };
 
   private eraseElements = (pointerDownState: PointerDownState) => {
-    const elements = this.scene.getElementsIncludingDeleted().map((ele) => {
+    const elements = this.scene.getElementsIncludingDeleted(true).map((ele) => {
       if (
         pointerDownState.elementIdsToErase[ele.id] &&
         pointerDownState.elementIdsToErase[ele.id].erase

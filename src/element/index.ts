@@ -76,7 +76,7 @@ export const getVisibleElements = (elements: readonly ExcalidrawElement[]) =>
 
 export const getNonDeletedElements = (elements: readonly ExcalidrawElement[]) =>
   elements.filter(
-    (element) => !element.isDeleted,
+    (element) => !element.isDeleted && !element.locked,
   ) as readonly NonDeletedExcalidrawElement[];
 
 export const getNonDeletedFrames = (

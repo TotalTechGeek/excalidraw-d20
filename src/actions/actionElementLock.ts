@@ -27,7 +27,6 @@ export const actionToggleElementLock = register({
       return false;
     }
 
-    const nextLockState = shouldLock(selectedElements);
     const selectedElementsMap = arrayToMap(selectedElements);
     return {
       elements: elements.map((element) => {
@@ -35,13 +34,25 @@ export const actionToggleElementLock = register({
           return element;
         }
 
-        return newElementWith(element, { locked: nextLockState });
+        if (
+          element.customData?.user &&
+          element.customData.user !== window.collab.state.username &&
+          window.collab.state.username !== window.collab.state.dm
+        ) {
+          return element;
+        }
+
+        return newElementWith(element, {
+          locked: false,
+          customData: {
+            ...element.customData,
+            locked: !element.customData?.locked,
+          },
+        });
       }),
       appState: {
         ...appState,
-        selectedLinearElement: nextLockState
-          ? null
-          : appState.selectedLinearElement,
+        selectedLinearElement: true ? null : appState.selectedLinearElement,
       },
       commitToHistory: true,
     };

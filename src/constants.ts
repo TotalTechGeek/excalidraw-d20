@@ -323,4 +323,4 @@ export const DEFAULT_SIDEBAR = {
   defaultTab: LIBRARY_SIDEBAR_TAB,
 } as const;
 
-export const LIBRARY_DISABLED_TYPES = new Set(["embeddable", "image"] as const);
+export const LIBRARY_DISABLED_TYPES = new Set(["embeddable"] as const);

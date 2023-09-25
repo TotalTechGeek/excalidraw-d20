@@ -81,6 +81,7 @@ interface CollabState {
   errorMessage: string;
   username: string;
   activeRoomLink: string;
+  dm?: string;
 }
 
 type CollabInstance = InstanceType<typeof Collab>;
@@ -171,7 +172,7 @@ class Collab extends PureComponent<Props, CollabState> {
 
     appJotaiStore.set(collabAPIAtom, collabAPI);
 
-    if (import.meta.env.MODE === ENV.TEST || import.meta.env.DEV) {
+    if (true || import.meta.env.MODE === ENV.TEST || import.meta.env.DEV) {
       window.collab = window.collab || ({} as Window["collab"]);
       Object.defineProperties(window, {
         collab: {
@@ -507,6 +508,32 @@ class Collab extends PureComponent<Props, CollabState> {
               this.reconcileElements(decryptedData.payload.elements),
             );
             break;
+          case "CHAT_MESSAGE": {
+            const { username, message, type, to } = decryptedData.payload;
+            const user = to === "dm" ? this.state.dm ?? "dm" : to;
+
+            if (user && user !== this.state.username) {
+              break;
+            }
+
+            this.excalidrawAPI.addMessage({
+              name: username,
+              message,
+              type,
+              to: user,
+            });
+            break;
+          }
+          case "SET_DM": {
+            const { username } = decryptedData.payload;
+            this.setState({ dm: username });
+            this.excalidrawAPI.addMessage({
+              name: "System",
+              message: `${username} is now your DM`,
+              type: "message",
+            });
+            break;
+          }
           case "MOUSE_LOCATION": {
             const { pointer, button, username, selectedElementIds } =
               decryptedData.payload;
@@ -816,6 +843,10 @@ class Collab extends PureComponent<Props, CollabState> {
     this.setState({ username });
   };
 
+  setDM = (username: string) => {
+    this.setState({ dm: username });
+  };
+
   onUsernameChange = (username: string) => {
     this.setUsername(username);
     saveUsernameToLocalStorage(username);
@@ -857,7 +888,7 @@ declare global {
   }
 }
 
-if (import.meta.env.MODE === ENV.TEST || import.meta.env.DEV) {
+if (true || import.meta.env.MODE === ENV.TEST || import.meta.env.DEV) {
   window.collab = window.collab || ({} as Window["collab"]);
 }
 

@@ -255,6 +255,7 @@ export type AppState = {
   selectedElementsAreBeingDragged: boolean;
   shouldCacheIgnoreZoom: boolean;
   toast: { message: string; closable?: boolean; duration?: number } | null;
+  userMessages: { name: string; message: string; type: "message" | "roll" }[];
   zenModeEnabled: boolean;
   theme: Theme;
   gridSize: number | null;
@@ -611,6 +612,9 @@ export type ExcalidrawImperativeAPI = {
   getFiles: () => InstanceType<typeof App>["files"];
   refresh: InstanceType<typeof App>["refresh"];
   setToast: InstanceType<typeof App>["setToast"];
+  addMessage: InstanceType<typeof App>["addMessage"];
+  addMessages: InstanceType<typeof App>["addMessages"];
+  clearMessages: InstanceType<typeof App>["clearMessages"];
   addFiles: (data: BinaryFileData[]) => void;
   readyPromise: ResolvablePromise<ExcalidrawImperativeAPI>;
   ready: true;

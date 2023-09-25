@@ -197,6 +197,39 @@ class Portal {
     }
   };
 
+  sendChatMessage(
+    message: string,
+    type: "message" | "roll" = "message",
+    to: string | undefined = undefined,
+  ) {
+    if (this.socket?.id) {
+      const data: SocketUpdateDataSource["CHAT_MESSAGE"] = {
+        type: "CHAT_MESSAGE",
+        payload: {
+          socketId: this.socket.id,
+          username: this.collab.state.username,
+          message,
+          type,
+          ...(to && { to }),
+        },
+      };
+      return this._broadcastSocketData(data as SocketUpdateData, false);
+    }
+  }
+
+  setDM(username: string = window.collab.state.username) {
+    if (this.socket?.id) {
+      const data: SocketUpdateDataSource["SET_DM"] = {
+        type: "SET_DM",
+        payload: {
+          socketId: this.socket.id,
+          username,
+        },
+      };
+      return this._broadcastSocketData(data as SocketUpdateData, false);
+    }
+  }
+
   broadcastMouseLocation = (payload: {
     pointer: SocketUpdateDataSource["MOUSE_LOCATION"]["payload"]["pointer"];
     button: SocketUpdateDataSource["MOUSE_LOCATION"]["payload"]["button"];
