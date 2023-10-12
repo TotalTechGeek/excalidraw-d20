@@ -268,7 +268,7 @@ import {
   CONTEXT_MENU_SEPARATOR,
 } from "./ContextMenu";
 import LayerUI from "./LayerUI";
-import { Toast } from "./Toast";
+// import { Toast } from "./Toast";
 import { actionToggleViewMode } from "../actions/actionToggleViewMode";
 import {
   dataURLToFile,
@@ -1179,125 +1179,127 @@ class App extends React.Component<AppProps, AppState> {
         }
       >
         <AppContext.Provider value={this}>
-          <GoogleOAuthProvider clientId="102610699821-nn4c785q5e5tnoun1d9eptr65d8v4o56.apps.googleusercontent.com">
-            <AppPropsContext.Provider value={this.props}>
-              <ExcalidrawContainerContext.Provider
-                value={this.excalidrawContainerValue}
-              >
-                <DeviceContext.Provider value={this.device}>
-                  <ExcalidrawSetAppStateContext.Provider
-                    value={this.setAppState}
-                  >
-                    <ExcalidrawAppStateContext.Provider value={this.state}>
-                      <ExcalidrawElementsContext.Provider
-                        value={this.scene.getNonDeletedElements()}
-                      >
-                        <LayerUI
-                          canvas={this.canvas}
-                          interactiveCanvas={this.interactiveCanvas}
-                          appState={this.state}
-                          files={this.files}
-                          setAppState={this.setAppState}
-                          actionManager={this.actionManager}
-                          elements={this.scene.getNonDeletedElements()}
-                          onLockToggle={this.toggleLock}
-                          onPenModeToggle={this.togglePenMode}
-                          onHandToolToggle={this.onHandToolToggle}
-                          langCode={getLanguage().code}
-                          renderTopRightUI={renderTopRightUI}
-                          renderCustomStats={renderCustomStats}
-                          showExitZenModeBtn={
-                            typeof this.props?.zenModeEnabled === "undefined" &&
-                            this.state.zenModeEnabled
-                          }
-                          UIOptions={this.props.UIOptions}
-                          onImageAction={this.onImageAction}
-                          onExportImage={this.onExportImage}
-                          renderWelcomeScreen={
-                            !this.state.isLoading &&
-                            this.state.showWelcomeScreen &&
-                            this.state.activeTool.type === "selection" &&
-                            !this.state.zenModeEnabled &&
-                            !this.scene.getElementsIncludingDeleted().length
-                          }
-                          app={this}
-                          isCollaborating={this.props.isCollaborating}
+          <ExcalidrawActionManagerContext.Provider value={this.actionManager}>
+            <GoogleOAuthProvider clientId="102610699821-nn4c785q5e5tnoun1d9eptr65d8v4o56.apps.googleusercontent.com">
+              <AppPropsContext.Provider value={this.props}>
+                <ExcalidrawContainerContext.Provider
+                  value={this.excalidrawContainerValue}
+                >
+                  <DeviceContext.Provider value={this.device}>
+                    <ExcalidrawSetAppStateContext.Provider
+                      value={this.setAppState}
+                    >
+                      <ExcalidrawAppStateContext.Provider value={this.state}>
+                        <ExcalidrawElementsContext.Provider
+                          value={this.scene.getNonDeletedElements()}
                         >
-                          {this.props.children}
-                        </LayerUI>
-                        <div className="excalidraw-textEditorContainer" />
-                        <div className="excalidraw-contextMenuContainer" />
-                        <div className="excalidraw-eye-dropper-container" />
-                        <LaserToolOverlay manager={this.laserPathManager} />
-                        {selectedElements.length === 1 &&
-                          !this.state.contextMenu &&
-                          this.state.showHyperlinkPopup && (
-                            <Hyperlink
-                              key={selectedElements[0].id}
-                              element={selectedElements[0]}
-                              setAppState={this.setAppState}
-                              onLinkOpen={this.props.onLinkOpen}
-                              setToast={this.setToast}
+                          <LayerUI
+                            canvas={this.canvas}
+                            interactiveCanvas={this.interactiveCanvas}
+                            appState={this.state}
+                            files={this.files}
+                            setAppState={this.setAppState}
+                            actionManager={this.actionManager}
+                            elements={this.scene.getNonDeletedElements()}
+                            onLockToggle={this.toggleLock}
+                            onPenModeToggle={this.togglePenMode}
+                            onHandToolToggle={this.onHandToolToggle}
+                            langCode={getLanguage().code}
+                            renderTopRightUI={renderTopRightUI}
+                            renderCustomStats={renderCustomStats}
+                            showExitZenModeBtn={
+                              typeof this.props?.zenModeEnabled ===
+                                "undefined" && this.state.zenModeEnabled
+                            }
+                            UIOptions={this.props.UIOptions}
+                            onImageAction={this.onImageAction}
+                            onExportImage={this.onExportImage}
+                            renderWelcomeScreen={
+                              !this.state.isLoading &&
+                              this.state.showWelcomeScreen &&
+                              this.state.activeTool.type === "selection" &&
+                              !this.state.zenModeEnabled &&
+                              !this.scene.getElementsIncludingDeleted().length
+                            }
+                            app={this}
+                            isCollaborating={this.props.isCollaborating}
+                          >
+                            {this.props.children}
+                          </LayerUI>
+                          <div className="excalidraw-textEditorContainer" />
+                          <div className="excalidraw-contextMenuContainer" />
+                          <div className="excalidraw-eye-dropper-container" />
+                          <LaserToolOverlay manager={this.laserPathManager} />
+                          {selectedElements.length === 1 &&
+                            !this.state.contextMenu &&
+                            this.state.showHyperlinkPopup && (
+                              <Hyperlink
+                                key={selectedElements[0].id}
+                                element={selectedElements[0]}
+                                setAppState={this.setAppState}
+                                onLinkOpen={this.props.onLinkOpen}
+                                setToast={this.setToast}
+                              />
+                            )}
+                          {this.state.contextMenu && (
+                            <ContextMenu
+                              items={this.state.contextMenu.items}
+                              top={this.state.contextMenu.top}
+                              left={this.state.contextMenu.left}
+                              actionManager={this.actionManager}
                             />
                           )}
-                        {this.state.contextMenu && (
-                          <ContextMenu
-                            items={this.state.contextMenu.items}
-                            top={this.state.contextMenu.top}
-                            left={this.state.contextMenu.left}
-                            actionManager={this.actionManager}
+                          <Chat messages={this.state.userMessages} />
+                          <StaticCanvas
+                            canvas={this.canvas}
+                            rc={this.rc}
+                            elements={canvasElements}
+                            visibleElements={visibleElements}
+                            versionNonce={versionNonce}
+                            selectionNonce={
+                              this.state.selectionElement?.versionNonce
+                            }
+                            scale={window.devicePixelRatio}
+                            appState={this.state}
+                            renderConfig={{
+                              imageCache: this.imageCache,
+                              isExporting: false,
+                              renderGrid: true,
+                            }}
                           />
-                        )}
-                        <Chat messages={this.state.userMessages} />
-                        <StaticCanvas
-                          canvas={this.canvas}
-                          rc={this.rc}
-                          elements={canvasElements}
-                          visibleElements={visibleElements}
-                          versionNonce={versionNonce}
-                          selectionNonce={
-                            this.state.selectionElement?.versionNonce
-                          }
-                          scale={window.devicePixelRatio}
-                          appState={this.state}
-                          renderConfig={{
-                            imageCache: this.imageCache,
-                            isExporting: false,
-                            renderGrid: true,
-                          }}
-                        />
-                        <InteractiveCanvas
-                          containerRef={this.excalidrawContainerRef}
-                          canvas={this.interactiveCanvas}
-                          elements={canvasElements}
-                          visibleElements={visibleElements}
-                          selectedElements={selectedElements}
-                          versionNonce={versionNonce}
-                          selectionNonce={
-                            this.state.selectionElement?.versionNonce
-                          }
-                          scale={window.devicePixelRatio}
-                          appState={this.state}
-                          renderInteractiveSceneCallback={
-                            this.renderInteractiveSceneCallback
-                          }
-                          handleCanvasRef={this.handleInteractiveCanvasRef}
-                          onContextMenu={this.handleCanvasContextMenu}
-                          onPointerMove={this.handleCanvasPointerMove}
-                          onPointerUp={this.handleCanvasPointerUp}
-                          onPointerCancel={this.removePointer}
-                          onTouchMove={this.handleTouchMove}
-                          onPointerDown={this.handleCanvasPointerDown}
-                          onDoubleClick={this.handleCanvasDoubleClick}
-                        />
-                        {this.renderFrameNames()}
-                      </ExcalidrawElementsContext.Provider>
-                    </ExcalidrawAppStateContext.Provider>
-                  </ExcalidrawSetAppStateContext.Provider>
-                </DeviceContext.Provider>
-              </ExcalidrawContainerContext.Provider>
-            </AppPropsContext.Provider>
-          </GoogleOAuthProvider>
+                          <InteractiveCanvas
+                            containerRef={this.excalidrawContainerRef}
+                            canvas={this.interactiveCanvas}
+                            elements={canvasElements}
+                            visibleElements={visibleElements}
+                            selectedElements={selectedElements}
+                            versionNonce={versionNonce}
+                            selectionNonce={
+                              this.state.selectionElement?.versionNonce
+                            }
+                            scale={window.devicePixelRatio}
+                            appState={this.state}
+                            renderInteractiveSceneCallback={
+                              this.renderInteractiveSceneCallback
+                            }
+                            handleCanvasRef={this.handleInteractiveCanvasRef}
+                            onContextMenu={this.handleCanvasContextMenu}
+                            onPointerMove={this.handleCanvasPointerMove}
+                            onPointerUp={this.handleCanvasPointerUp}
+                            onPointerCancel={this.removePointer}
+                            onTouchMove={this.handleTouchMove}
+                            onPointerDown={this.handleCanvasPointerDown}
+                            onDoubleClick={this.handleCanvasDoubleClick}
+                          />
+                          {this.renderFrameNames()}
+                        </ExcalidrawElementsContext.Provider>
+                      </ExcalidrawAppStateContext.Provider>
+                    </ExcalidrawSetAppStateContext.Provider>
+                  </DeviceContext.Provider>
+                </ExcalidrawContainerContext.Provider>
+              </AppPropsContext.Provider>
+            </GoogleOAuthProvider>
+          </ExcalidrawActionManagerContext.Provider>
         </AppContext.Provider>
       </div>
     );
