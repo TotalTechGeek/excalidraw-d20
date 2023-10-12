@@ -1240,66 +1240,66 @@ class App extends React.Component<AppProps, AppState> {
                               setToast={this.setToast}
                             />
                           )}
-                          {this.state.contextMenu && (
-                            <ContextMenu
-                              items={this.state.contextMenu.items}
-                              top={this.state.contextMenu.top}
-                              left={this.state.contextMenu.left}
-                              actionManager={this.actionManager}
-                            />
-                          )}
-                          <Chat messages={this.state.userMessages} />
-                          <StaticCanvas
-                            canvas={this.canvas}
-                            rc={this.rc}
-                            elements={canvasElements}
-                            visibleElements={visibleElements}
-                            versionNonce={versionNonce}
-                            selectionNonce={
-                              this.state.selectionElement?.versionNonce
-                            }
-                            scale={window.devicePixelRatio}
-                            appState={this.state}
-                            renderConfig={{
-                              imageCache: this.imageCache,
-                              isExporting: false,
-                              renderGrid: true,
-                            }}
+                        {this.state.contextMenu && (
+                          <ContextMenu
+                            items={this.state.contextMenu.items}
+                            top={this.state.contextMenu.top}
+                            left={this.state.contextMenu.left}
+                            actionManager={this.actionManager}
                           />
-                          <InteractiveCanvas
-                            containerRef={this.excalidrawContainerRef}
-                            canvas={this.interactiveCanvas}
-                            elements={canvasElements}
-                            visibleElements={visibleElements}
-                            selectedElements={selectedElements}
-                            versionNonce={versionNonce}
-                            selectionNonce={
-                              this.state.selectionElement?.versionNonce
-                            }
-                            scale={window.devicePixelRatio}
-                            appState={this.state}
-                            renderInteractiveSceneCallback={
-                              this.renderInteractiveSceneCallback
-                            }
-                            handleCanvasRef={this.handleInteractiveCanvasRef}
-                            onContextMenu={this.handleCanvasContextMenu}
-                            onPointerMove={this.handleCanvasPointerMove}
-                            onPointerUp={this.handleCanvasPointerUp}
-                            onPointerCancel={this.removePointer}
-                            onTouchMove={this.handleTouchMove}
-                            onPointerDown={this.handleCanvasPointerDown}
-                            onDoubleClick={this.handleCanvasDoubleClick}
-                          />
-                          {this.renderFrameNames()}
-                          </ExcalidrawElementsContext.Provider>
-                          </ExcalidrawAppStateContext.Provider>
-                          </ExcalidrawSetAppStateContext.Provider>
-                          </DeviceContext.Provider>
-                          </ExcalidrawContainerContext.Provider>
-                          </AppPropsContext.Provider>
-                          </GoogleOAuthProvider>
-                          </AppContext.Provider>
-                          </div>
+                        )}
+                        <Chat messages={this.state.userMessages} />
+                        <StaticCanvas
+                          canvas={this.canvas}
+                          rc={this.rc}
+                          elements={canvasElements}
+                          visibleElements={visibleElements}
+                          versionNonce={versionNonce}
+                          selectionNonce={
+                            this.state.selectionElement?.versionNonce
+                          }
+                          scale={window.devicePixelRatio}
+                          appState={this.state}
+                          renderConfig={{
+                            imageCache: this.imageCache,
+                            isExporting: false,
+                            renderGrid: true,
+                          }}
+                        />
+                        <InteractiveCanvas
+                          containerRef={this.excalidrawContainerRef}
+                          canvas={this.interactiveCanvas}
+                          elements={canvasElements}
+                          visibleElements={visibleElements}
+                          selectedElements={selectedElements}
+                          versionNonce={versionNonce}
+                          selectionNonce={
+                            this.state.selectionElement?.versionNonce
+                          }
+                          scale={window.devicePixelRatio}
+                          appState={this.state}
+                          renderInteractiveSceneCallback={
+                            this.renderInteractiveSceneCallback
+                          }
+                          handleCanvasRef={this.handleInteractiveCanvasRef}
+                          onContextMenu={this.handleCanvasContextMenu}
+                          onPointerMove={this.handleCanvasPointerMove}
+                          onPointerUp={this.handleCanvasPointerUp}
+                          onPointerCancel={this.removePointer}
+                          onTouchMove={this.handleTouchMove}
+                          onPointerDown={this.handleCanvasPointerDown}
+                          onDoubleClick={this.handleCanvasDoubleClick}
+                        />
+                        {this.renderFrameNames()}
+                      </ExcalidrawElementsContext.Provider>
+                    </ExcalidrawAppStateContext.Provider>
+                  </ExcalidrawSetAppStateContext.Provider>
+                </DeviceContext.Provider>
+              </ExcalidrawContainerContext.Provider>
+            </AppPropsContext.Provider>
+          </GoogleOAuthProvider>
+        </AppContext.Provider>
+      </div>
     );
   }
 
