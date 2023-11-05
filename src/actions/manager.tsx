@@ -123,10 +123,10 @@ export class ActionManager {
     return true;
   }
 
-  executeAction(
-    action: Action,
+  executeAction<T extends Action>(
+    action: T,
     source: ActionSource = "api",
-    value: any = null,
+    value: Parameters<T["perform"]>[2] = null,
   ) {
     const elements = this.getElementsIncludingDeleted(false);
     const appState = this.getAppState();

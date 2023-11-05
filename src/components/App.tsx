@@ -47,7 +47,7 @@ import {
   isEraserActive,
   isHandToolActive,
 } from "../appState";
-import { parseClipboard } from "../clipboard";
+import { PastedMixedContent, parseClipboard } from "../clipboard";
 import {
   APP_NAME,
   CURSOR_TYPE,
@@ -275,6 +275,7 @@ import {
   generateIdFromFile,
   getDataURL,
   getFileFromEvent,
+  ImageURLToFile,
   isImageFileHandle,
   isSupportedImageFile,
   loadSceneOrLibraryFromBlob,
@@ -362,11 +363,12 @@ import {
 } from "../data/transform";
 import { ValueOf } from "../utility-types";
 import { isSidebarDockedAtom } from "./Sidebar/Sidebar";
-import { StaticCanvas, InteractiveCanvas } from "./canvases";
+import { StaticCanvas } from "./canvases";
 import { Renderer } from "../scene/Renderer";
 import { ShapeCache } from "../scene/ShapeCache";
 import { Chat } from "./Chat";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import MermaidToExcalidraw from "./MermaidToExcalidraw";
 import { LaserToolOverlay } from "./LaserTool/LaserTool";
 import { LaserPathManager } from "./LaserTool/LaserPathManager";
 import {
@@ -375,6 +377,7 @@ import {
   resetCursor,
   setCursorForShape,
 } from "../cursor";
+import { Emitter } from "../emitter";
 
 const AppContext = React.createContext<AppClassProperties>(null!);
 const AppPropsContext = React.createContext<AppProps>(null!);
@@ -506,6 +509,30 @@ class App extends React.Component<AppProps, AppState> {
 
   laserPathManager: LaserPathManager = new LaserPathManager(this);
 
+  onChangeEmitter = new Emitter<
+    [
+      elements: readonly ExcalidrawElement[],
+      appState: AppState,
+      files: BinaryFiles,
+    ]
+  >();
+
+  onPointerDownEmitter = new Emitter<
+    [
+      activeTool: AppState["activeTool"],
+      pointerDownState: PointerDownState,
+      event: React.PointerEvent<HTMLElement>,
+    ]
+  >();
+
+  onPointerUpEmitter = new Emitter<
+    [
+      activeTool: AppState["activeTool"],
+      pointerDownState: PointerDownState,
+      event: PointerEvent,
+    ]
+  >();
+
   constructor(props: AppProps) {
     super(props);
     const defaultAppState = getDefaultAppState();
@@ -572,6 +599,9 @@ class App extends React.Component<AppProps, AppState> {
         resetCursor: this.resetCursor,
         updateFrameRendering: this.updateFrameRendering,
         toggleSidebar: this.toggleSidebar,
+        onChange: (cb) => this.onChangeEmitter.on(cb),
+        onPointerDown: (cb) => this.onPointerDownEmitter.on(cb),
+        onPointerUp: (cb) => this.onPointerUpEmitter.on(cb),
       } as const;
       if (typeof excalidrawRef === "function") {
         excalidrawRef(api);
@@ -1189,111 +1219,89 @@ class App extends React.Component<AppProps, AppState> {
                     <ExcalidrawSetAppStateContext.Provider
                       value={this.setAppState}
                     >
-                      <ExcalidrawAppStateContext.Provider value={this.state}>
-                        <ExcalidrawElementsContext.Provider
-                          value={this.scene.getNonDeletedElements()}
-                        >
-                          <LayerUI
-                            canvas={this.canvas}
-                            interactiveCanvas={this.interactiveCanvas}
-                            appState={this.state}
-                            files={this.files}
+                      <LayerUI
+                        canvas={this.canvas}
+                        appState={this.state}
+                        files={this.files}
+                        setAppState={this.setAppState}
+                        actionManager={this.actionManager}
+                        elements={this.scene.getNonDeletedElements()}
+                        onLockToggle={this.toggleLock}
+                        onPenModeToggle={this.togglePenMode}
+                        onHandToolToggle={this.onHandToolToggle}
+                        langCode={getLanguage().code}
+                        renderTopRightUI={renderTopRightUI}
+                        renderCustomStats={renderCustomStats}
+                        showExitZenModeBtn={
+                          typeof this.props?.zenModeEnabled === "undefined" &&
+                          this.state.zenModeEnabled
+                        }
+                        UIOptions={this.props.UIOptions}
+                        onExportImage={this.onExportImage}
+                        renderWelcomeScreen={
+                          !this.state.isLoading &&
+                          this.state.showWelcomeScreen &&
+                          this.state.activeTool.type === "selection" &&
+                          !this.state.zenModeEnabled &&
+                          !this.scene.getElementsIncludingDeleted().length
+                        }
+                        app={this}
+                        isCollaborating={this.props.isCollaborating}
+                      >
+                        {this.props.children}
+                        {this.state.openDialog === "mermaid" && (
+                          <MermaidToExcalidraw />
+                        )}
+                      </LayerUI>
+
+                      <div className="excalidraw-textEditorContainer" />
+                      <div className="excalidraw-contextMenuContainer" />
+                      <div className="excalidraw-eye-dropper-container" />
+                      <LaserToolOverlay manager={this.laserPathManager} />
+                      {selectedElements.length === 1 &&
+                        !this.state.contextMenu &&
+                        this.state.showHyperlinkPopup && (
+                          <Hyperlink
+                            key={selectedElements[0].id}
+                            element={selectedElements[0]}
                             setAppState={this.setAppState}
-                            actionManager={this.actionManager}
-                            elements={this.scene.getNonDeletedElements()}
-                            onLockToggle={this.toggleLock}
-                            onPenModeToggle={this.togglePenMode}
-                            onHandToolToggle={this.onHandToolToggle}
-                            langCode={getLanguage().code}
-                            renderTopRightUI={renderTopRightUI}
-                            renderCustomStats={renderCustomStats}
-                            showExitZenModeBtn={
-                              typeof this.props?.zenModeEnabled ===
-                                "undefined" && this.state.zenModeEnabled
-                            }
-                            UIOptions={this.props.UIOptions}
-                            onImageAction={this.onImageAction}
-                            onExportImage={this.onExportImage}
-                            renderWelcomeScreen={
-                              !this.state.isLoading &&
-                              this.state.showWelcomeScreen &&
-                              this.state.activeTool.type === "selection" &&
-                              !this.state.zenModeEnabled &&
-                              !this.scene.getElementsIncludingDeleted().length
-                            }
-                            app={this}
-                            isCollaborating={this.props.isCollaborating}
-                          >
-                            {this.props.children}
-                          </LayerUI>
-                          <div className="excalidraw-textEditorContainer" />
-                          <div className="excalidraw-contextMenuContainer" />
-                          <div className="excalidraw-eye-dropper-container" />
-                          <LaserToolOverlay manager={this.laserPathManager} />
-                          {selectedElements.length === 1 &&
-                            !this.state.contextMenu &&
-                            this.state.showHyperlinkPopup && (
-                              <Hyperlink
-                                key={selectedElements[0].id}
-                                element={selectedElements[0]}
-                                setAppState={this.setAppState}
-                                onLinkOpen={this.props.onLinkOpen}
-                                setToast={this.setToast}
-                              />
-                            )}
-                          {this.state.contextMenu && (
-                            <ContextMenu
-                              items={this.state.contextMenu.items}
-                              top={this.state.contextMenu.top}
-                              left={this.state.contextMenu.left}
-                              actionManager={this.actionManager}
-                            />
-                          )}
-                          <Chat messages={this.state.userMessages} />
-                          <StaticCanvas
-                            canvas={this.canvas}
-                            rc={this.rc}
-                            elements={canvasElements}
-                            visibleElements={visibleElements}
-                            versionNonce={versionNonce}
-                            selectionNonce={
-                              this.state.selectionElement?.versionNonce
-                            }
-                            scale={window.devicePixelRatio}
-                            appState={this.state}
-                            renderConfig={{
-                              imageCache: this.imageCache,
-                              isExporting: false,
-                              renderGrid: true,
-                            }}
+                            onLinkOpen={this.props.onLinkOpen}
+                            setToast={this.setToast}
                           />
-                          <InteractiveCanvas
-                            containerRef={this.excalidrawContainerRef}
-                            canvas={this.interactiveCanvas}
-                            elements={canvasElements}
-                            visibleElements={visibleElements}
-                            selectedElements={selectedElements}
-                            versionNonce={versionNonce}
-                            selectionNonce={
-                              this.state.selectionElement?.versionNonce
-                            }
-                            scale={window.devicePixelRatio}
-                            appState={this.state}
-                            renderInteractiveSceneCallback={
-                              this.renderInteractiveSceneCallback
-                            }
-                            handleCanvasRef={this.handleInteractiveCanvasRef}
-                            onContextMenu={this.handleCanvasContextMenu}
-                            onPointerMove={this.handleCanvasPointerMove}
-                            onPointerUp={this.handleCanvasPointerUp}
-                            onPointerCancel={this.removePointer}
-                            onTouchMove={this.handleTouchMove}
-                            onPointerDown={this.handleCanvasPointerDown}
-                            onDoubleClick={this.handleCanvasDoubleClick}
-                          />
-                          {this.renderFrameNames()}
-                        </ExcalidrawElementsContext.Provider>
-                      </ExcalidrawAppStateContext.Provider>
+                        )}
+                      <Chat messages={this.state.userMessages} />
+                      <StaticCanvas
+                        canvas={this.canvas}
+                        rc={this.rc}
+                        elements={canvasElements}
+                        visibleElements={visibleElements}
+                        versionNonce={versionNonce}
+                        selectionNonce={
+                          this.state.selectionElement?.versionNonce
+                        }
+                        scale={window.devicePixelRatio}
+                        appState={this.state}
+                        renderConfig={{
+                          imageCache: this.imageCache,
+                          isExporting: false,
+                          renderGrid: true,
+                        }}
+                      />
+                      {this.state.contextMenu && (
+                        <ContextMenu
+                          items={this.state.contextMenu.items}
+                          top={this.state.contextMenu.top}
+                          left={this.state.contextMenu.left}
+                          actionManager={this.actionManager}
+                          onClose={(callback) => {
+                            this.setState({ contextMenu: null }, () => {
+                              this.focusContainer();
+                              callback?.();
+                            });
+                          }}
+                        />
+                      )}
+                      {this.renderFrameNames()}
                     </ExcalidrawSetAppStateContext.Provider>
                   </DeviceContext.Provider>
                 </ExcalidrawContainerContext.Provider>
@@ -1752,6 +1760,7 @@ class App extends React.Component<AppProps, AppState> {
     this.scene.destroy();
     this.library.destroy();
     this.laserPathManager.destroy();
+    this.onChangeEmitter.destroy();
     ShapeCache.destroy();
     SnapCache.destroy();
     clearTimeout(touchTimeout);
@@ -2036,6 +2045,11 @@ class App extends React.Component<AppProps, AppState> {
         this.state,
         this.files,
       );
+      this.onChangeEmitter.trigger(
+        this.scene.getElementsIncludingDeleted(),
+        this.state,
+        this.files,
+      );
     }
   }
 
@@ -2078,7 +2092,7 @@ class App extends React.Component<AppProps, AppState> {
     if (!isExcalidrawActive || isWritableElement(event.target)) {
       return;
     }
-    this.cutAll();
+    this.actionManager.executeAction(actionCut, "keyboard", event);
     event.preventDefault();
     event.stopPropagation();
   });
@@ -2090,18 +2104,10 @@ class App extends React.Component<AppProps, AppState> {
     if (!isExcalidrawActive || isWritableElement(event.target)) {
       return;
     }
-    this.copyAll();
+    this.actionManager.executeAction(actionCopy, "keyboard", event);
     event.preventDefault();
     event.stopPropagation();
   });
-
-  private cutAll = () => {
-    this.actionManager.executeAction(actionCut, "keyboard");
-  };
-
-  private copyAll = () => {
-    this.actionManager.executeAction(actionCopy, "keyboard");
-  };
 
   private static resetTapTwice() {
     didTapTwice = false;
@@ -2163,8 +2169,8 @@ class App extends React.Component<AppProps, AppState> {
   };
 
   public pasteFromClipboard = withBatchedUpdates(
-    async (event: ClipboardEvent | null) => {
-      const isPlainPaste = !!(IS_PLAIN_PASTE && event);
+    async (event: ClipboardEvent) => {
+      const isPlainPaste = !!IS_PLAIN_PASTE;
 
       // #686
       const target = document.activeElement;
@@ -2186,21 +2192,6 @@ class App extends React.Component<AppProps, AppState> {
         return;
       }
 
-      // must be called in the same frame (thus before any awaits) as the paste
-      // event else some browsers (FF...) will clear the clipboardData
-      // (something something security)
-      let file = event?.clipboardData?.files[0];
-
-      const data = await parseClipboard(event, isPlainPaste);
-      if (!file && data.text && !isPlainPaste) {
-        const string = data.text.trim();
-        if (string.startsWith("<svg") && string.endsWith("</svg>")) {
-          // ignore SVG validation/normalization which will be done during image
-          // initialization
-          file = SVGStringToFile(string);
-        }
-      }
-
       const { x: sceneX, y: sceneY } = viewportCoordsToSceneCoords(
         {
           clientX: this.lastViewportPosition.x,
@@ -2208,6 +2199,29 @@ class App extends React.Component<AppProps, AppState> {
         },
         this.state,
       );
+
+      // must be called in the same frame (thus before any awaits) as the paste
+      // event else some browsers (FF...) will clear the clipboardData
+      // (something something security)
+      let file = event?.clipboardData?.files[0];
+
+      const data = await parseClipboard(event, isPlainPaste);
+      if (!file && !isPlainPaste) {
+        if (data.mixedContent) {
+          return this.addElementsFromMixedContentPaste(data.mixedContent, {
+            isPlainPaste,
+            sceneX,
+            sceneY,
+          });
+        } else if (data.text) {
+          const string = data.text.trim();
+          if (string.startsWith("<svg") && string.endsWith("</svg>")) {
+            // ignore SVG validation/normalization which will be done during image
+            // initialization
+            file = SVGStringToFile(string);
+          }
+        }
+      }
 
       // prefer spreadsheet data over image file (MS Office/Libre Office)
       if (isSupportedImageFile(file) && !data.spreadsheet) {
@@ -2262,6 +2276,7 @@ class App extends React.Component<AppProps, AppState> {
         });
       } else if (data.text) {
         const maybeUrl = extractSrc(data.text);
+
         if (
           !isPlainPaste &&
           embeddableURLValidator(maybeUrl, this.props.validateEmbeddable) &&
@@ -2285,11 +2300,12 @@ class App extends React.Component<AppProps, AppState> {
     },
   );
 
-  private addElementsFromPasteOrLibrary = (opts: {
+  addElementsFromPasteOrLibrary = (opts: {
     elements: readonly ExcalidrawElement[];
     files: BinaryFiles | null;
     position: { clientX: number; clientY: number } | "cursor" | "center";
     retainSeed?: boolean;
+    fitToContent?: boolean;
   }) => {
     for (const element of opts.elements) {
       if (!element.customData) {
@@ -2405,7 +2421,92 @@ class App extends React.Component<AppProps, AppState> {
       },
     );
     this.setActiveTool({ type: "selection" });
+
+    if (opts.fitToContent) {
+      this.scrollToContent(newElements, {
+        fitToContent: true,
+      });
+    }
   };
+
+  // TODO rewrite this to paste both text & images at the same time if
+  // pasted data contains both
+  private async addElementsFromMixedContentPaste(
+    mixedContent: PastedMixedContent,
+    {
+      isPlainPaste,
+      sceneX,
+      sceneY,
+    }: { isPlainPaste: boolean; sceneX: number; sceneY: number },
+  ) {
+    if (
+      !isPlainPaste &&
+      mixedContent.some((node) => node.type === "imageUrl")
+    ) {
+      const imageURLs = mixedContent
+        .filter((node) => node.type === "imageUrl")
+        .map((node) => node.value);
+      const responses = await Promise.all(
+        imageURLs.map(async (url) => {
+          try {
+            return { file: await ImageURLToFile(url) };
+          } catch (error: any) {
+            return { errorMessage: error.message as string };
+          }
+        }),
+      );
+      let y = sceneY;
+      let firstImageYOffsetDone = false;
+      const nextSelectedIds: Record<ExcalidrawElement["id"], true> = {};
+      for (const response of responses) {
+        if (response.file) {
+          const imageElement = this.createImageElement({
+            sceneX,
+            sceneY: y,
+          });
+
+          const initializedImageElement = await this.insertImageElement(
+            imageElement,
+            response.file,
+          );
+          if (initializedImageElement) {
+            // vertically center first image in the batch
+            if (!firstImageYOffsetDone) {
+              firstImageYOffsetDone = true;
+              y -= initializedImageElement.height / 2;
+            }
+            // hack to reset the `y` coord because we vertically center during
+            // insertImageElement
+            mutateElement(initializedImageElement, { y }, false);
+
+            y = imageElement.y + imageElement.height + 25;
+
+            nextSelectedIds[imageElement.id] = true;
+          }
+        }
+      }
+
+      this.setState({
+        selectedElementIds: makeNextSelectedElementIds(
+          nextSelectedIds,
+          this.state,
+        ),
+      });
+
+      const error = responses.find((response) => !!response.errorMessage);
+      if (error && error.errorMessage) {
+        this.setState({ errorMessage: error.errorMessage });
+      }
+    } else {
+      const textNodes = mixedContent.filter((node) => node.type === "text");
+      if (textNodes.length) {
+        this.addTextFromPaste(
+          textNodes.map((node) => node.value).join("\n\n"),
+          isPlainPaste,
+        );
+      }
+    }
+  }
 
   private addTextFromPaste(text: string, isPlainPaste = false) {
     const { x, y } = viewportCoordsToSceneCoords(
@@ -3182,11 +3283,16 @@ class App extends React.Component<AppProps, AppState> {
   });
 
   setActiveTool = (
-    tool:
-      | {
-          type: ToolType;
-        }
-      | { type: "custom"; customType: string },
+    tool: (
+      | (
+          | { type: Exclude<ToolType, "image"> }
+          | {
+              type: Extract<ToolType, "image">;
+              insertOnCanvasDirectly?: boolean;
+            }
+        )
+      | { type: "custom"; customType: string }
+    ) & { locked?: boolean },
   ) => {
     const nextActiveTool = updateActiveTool(this.state, tool);
     if (nextActiveTool.type === "hand") {
@@ -3201,7 +3307,10 @@ class App extends React.Component<AppProps, AppState> {
       this.setState({ suggestedBindings: [] });
     }
     if (nextActiveTool.type === "image") {
-      this.onImageAction();
+      this.onImageAction({
+        insertOnCanvasDirectly:
+          (tool.type === "image" && tool.insertOnCanvasDirectly) ?? false,
+      });
     }
 
     this.setState((prevState) => {
@@ -3227,6 +3336,10 @@ class App extends React.Component<AppProps, AppState> {
         ...commonResets,
       };
     });
+  };
+
+  setOpenDialog = (dialogType: AppState["openDialog"]) => {
+    this.setState({ openDialog: dialogType });
   };
 
   private setCursor = (cursor: string) => {
@@ -4193,6 +4306,7 @@ class App extends React.Component<AppProps, AppState> {
       scenePointer.x,
       scenePointer.y,
     );
+
     this.hitLinkElement = this.getElementLinkAtPosition(
       scenePointer,
       hitElement,
@@ -4459,6 +4573,7 @@ class App extends React.Component<AppProps, AppState> {
       setCursor(this.interactiveCanvas, CURSOR_TYPE.AUTO);
     }
   }
+
   private handleCanvasPointerDown = (
     event: React.PointerEvent<HTMLElement>,
   ) => {
@@ -4648,7 +4763,7 @@ class App extends React.Component<AppProps, AppState> {
         pointerDownState,
       );
     } else if (this.state.activeTool.type === "custom") {
-      setCursor(this.interactiveCanvas, CURSOR_TYPE.AUTO);
+      setCursorForShape(this.interactiveCanvas, this.state);
     } else if (this.state.activeTool.type === "frame") {
       this.createFrameElementOnPointerDown(pointerDownState);
     } else if (this.state.activeTool.type === "laser") {
@@ -4667,6 +4782,11 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     this.props?.onPointerDown?.(this.state.activeTool, pointerDownState);
+    this.onPointerDownEmitter.trigger(
+      this.state.activeTool,
+      pointerDownState,
+      event,
+    );
 
     const onPointerMove =
       this.onPointerMoveFromPointerDownHandler(pointerDownState);
@@ -6541,6 +6661,12 @@ class App extends React.Component<AppProps, AppState> {
         this.setState({ pendingImageElementId: null });
       }
 
+      this.onPointerUpEmitter.trigger(
+        this.state.activeTool,
+        pointerDownState,
+        childEvent,
+      );
+
       if (draggingElement?.type === "freedraw") {
         const pointerCoords = viewportCoordsToSceneCoords(
           childEvent,
@@ -7382,7 +7508,7 @@ class App extends React.Component<AppProps, AppState> {
     this.scene.addNewElement(imageElement);
 
     try {
-      await this.initializeImage({
+      return await this.initializeImage({
         imageFile,
         imageElement,
         showCursorImagePreview,
@@ -7395,6 +7521,7 @@ class App extends React.Component<AppProps, AppState> {
       this.setState({
         errorMessage: error.message || t("errors.imageInsertError"),
       });
+      return null;
     }
   };
 
@@ -7437,9 +7564,11 @@ class App extends React.Component<AppProps, AppState> {
     }
   };
 
-  private onImageAction = async (
-    { insertOnCanvasDirectly } = { insertOnCanvasDirectly: false },
-  ) => {
+  private onImageAction = async ({
+    insertOnCanvasDirectly,
+  }: {
+    insertOnCanvasDirectly: boolean;
+  }) => {
     try {
       const clientX = this.state.width / 2 + this.state.offsetLeft;
       const clientY = this.state.height / 2 + this.state.offsetTop;

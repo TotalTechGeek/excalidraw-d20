@@ -241,7 +241,7 @@ export type AppState = {
   openMenu: "canvas" | "shape" | null;
   openPopup: "canvasBackground" | "elementBackground" | "elementStroke" | null;
   openSidebar: { name: SidebarName; tab?: SidebarTabName } | null;
-  openDialog: "imageExport" | "help" | "jsonExport" | null;
+  openDialog: "imageExport" | "help" | "jsonExport" | "mermaid" | null;
   /**
    * Reflects user preference for whether the default sidebar should be docked.
    *
@@ -538,8 +538,12 @@ export type AppClassProperties = {
   onInsertElements: App["onInsertElements"];
   onExportImage: App["onExportImage"];
   lastViewportPosition: App["lastViewportPosition"];
+  scrollToContent: App["scrollToContent"];
+  addFiles: App["addFiles"];
+  addElementsFromPasteOrLibrary: App["addElementsFromPasteOrLibrary"];
   togglePenMode: App["togglePenMode"];
   setActiveTool: App["setActiveTool"];
+  setOpenDialog: App["setOpenDialog"];
 };
 
 export type PointerDownState = Readonly<{
@@ -608,6 +612,8 @@ export type PointerDownState = Readonly<{
   };
 }>;
 
+type UnsubscribeCallback = () => void;
+
 export type ExcalidrawImperativeAPI = {
   updateScene: InstanceType<typeof App>["updateScene"];
   updateLibrary: InstanceType<typeof Library>["updateLibrary"];
@@ -641,6 +647,27 @@ export type ExcalidrawImperativeAPI = {
    * used in conjunction with view mode (props.viewModeEnabled).
    */
   updateFrameRendering: InstanceType<typeof App>["updateFrameRendering"];
+  onChange: (
+    callback: (
+      elements: readonly ExcalidrawElement[],
+      appState: AppState,
+      files: BinaryFiles,
+    ) => void,
+  ) => UnsubscribeCallback;
+  onPointerDown: (
+    callback: (
+      activeTool: AppState["activeTool"],
+      pointerDownState: PointerDownState,
+      event: React.PointerEvent<HTMLElement>,
+    ) => void,
+  ) => UnsubscribeCallback;
+  onPointerUp: (
+    callback: (
+      activeTool: AppState["activeTool"],
+      pointerDownState: PointerDownState,
+      event: PointerEvent,
+    ) => void,
+  ) => UnsubscribeCallback;
 };
 
 export type Device = Readonly<{
@@ -676,3 +703,12 @@ export type KeyboardModifiersObject = {
   altKey: boolean;
   metaKey: boolean;
 };
+
+export type Primitive =
+  | number
+  | string
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined;
