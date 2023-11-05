@@ -363,7 +363,7 @@ import {
 } from "../data/transform";
 import { ValueOf } from "../utility-types";
 import { isSidebarDockedAtom } from "./Sidebar/Sidebar";
-import { StaticCanvas } from "./canvases";
+import { StaticCanvas, InteractiveCanvas } from "./canvases";
 import { Renderer } from "../scene/Renderer";
 import { ShapeCache } from "../scene/ShapeCache";
 import { Chat } from "./Chat";
@@ -1287,6 +1287,32 @@ class App extends React.Component<AppProps, AppState> {
                           renderGrid: true,
                         }}
                       />
+
+                      <InteractiveCanvas
+                        containerRef={this.excalidrawContainerRef}
+                        canvas={this.interactiveCanvas}
+                        elements={canvasElements}
+                        visibleElements={visibleElements}
+                        selectedElements={selectedElements}
+                        versionNonce={versionNonce}
+                        selectionNonce={
+                          this.state.selectionElement?.versionNonce
+                        }
+                        scale={window.devicePixelRatio}
+                        appState={this.state}
+                        renderInteractiveSceneCallback={
+                          this.renderInteractiveSceneCallback
+                        }
+                        handleCanvasRef={this.handleInteractiveCanvasRef}
+                        onContextMenu={this.handleCanvasContextMenu}
+                        onPointerMove={this.handleCanvasPointerMove}
+                        onPointerUp={this.handleCanvasPointerUp}
+                        onPointerCancel={this.removePointer}
+                        onTouchMove={this.handleTouchMove}
+                        onPointerDown={this.handleCanvasPointerDown}
+                        onDoubleClick={this.handleCanvasDoubleClick}
+                      />
+
                       {this.state.contextMenu && (
                         <ContextMenu
                           items={this.state.contextMenu.items}
